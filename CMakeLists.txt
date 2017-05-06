@@ -35,8 +35,10 @@ set(PRIVATE_INCLUDE_PATHS
 )
 
 set(SOURCES
-    src/BloomFilter.cpp
     include/BloomFilter/BloomFilter.h
+    src/BloomFilter.cpp
+    src/lookup3.c
+    src/lookup3.h
 )
 
 add_library(BloomFilter ${SOURCES})

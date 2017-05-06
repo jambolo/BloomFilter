@@ -1,8 +1,7 @@
 #include "BloomFilter/BloomFilter.h"
 
 #include <cmath>
-
-static size_t hash(void const * first, void const * last, size_t i);
+#include "lookup3.h"
 
 BloomFilterImplementation::BloomFilterImplementation(size_t size, float p)
 {
@@ -15,22 +14,37 @@ BloomFilterImplementation::BloomFilterImplementation(size_t size, float p)
     count_ = 0;
 }
 
-bool BloomFilterImplementation::includes(void const * first, void const * last) const
+BloomFilterImplementation::BloomFilterImplementation(size_t k, std::vector<bool> const & filter, size_t count)
+    : k_(k)
+    , filter_(filter)
+    , count_(count)
 {
-    for (size_t i = 0; i < k_; ++i)
+}
+
+bool BloomFilterImplementation::includes(void const * data, size_t size) const
+{
+    uint32_t h1 = 0;
+    uint32_t h2 = k_;
+    hashlittle2(data, size, &h1, &h2);
+
+    for (size_t i = 1; i <= k_; ++i)
     {
-        size_t h = hash(first, last, i);
+        size_t h = (h1 + i * h2) % filter_.size();
         if (!filter_[h])
             return false;
     }
     return true;
 }
 
-void BloomFilterImplementation::add(void const * first, void const * last)
+void BloomFilterImplementation::add(void const * data, size_t size)
 {
-    for (size_t i = 0; i < k_; ++i)
+    uint32_t h1 = 0;
+    uint32_t h2 = k_;
+    hashlittle2(data, size, &h1, &h2);
+
+    for (size_t i = 1; i <= k_; ++i)
     {
-        size_t h = hash(first, last, i);
+        size_t h = (h1 + i * h2) % filter_.size();
         filter_[h] = true;
     }
     ++count_;
@@ -44,7 +58,9 @@ float BloomFilterImplementation::p() const
     return powf(1.0f - powf(2.7, -k * n / m), k);
 }
 
-static size_t hash(void const * first, void const * last, size_t i)
+void BloomFilterImplementation::state(size_t & k, std::vector<bool> & filter, size_t & count) const
 {
-    return 0;
+    k = k_;
+    filter = filter_;
+    count = count_;
 }
